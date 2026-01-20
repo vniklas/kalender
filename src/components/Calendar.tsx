@@ -133,7 +133,8 @@ const Calendar = ({ events }: CalendarProps) => {
       </div>
       
       <div className="calendar-wrapper">
-        <div className="week-numbers" style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}>
+        <div className="week-numbers" style={{ gridTemplateRows: `35px repeat(${rows}, 1fr)` }}>
+          <div className="week-header">V.</div>
           {weeks.map((weekNum, idx) => (
             <div key={idx} className="week-number">
               {weekNum}

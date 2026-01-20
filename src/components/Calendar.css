@@ -34,14 +34,13 @@
 .calendar-wrapper {
   display: flex;
   gap: 10px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .week-numbers {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 5px;
-  padding-top: 35px; /* Match the height of weekday headers */
+  padding-top: 0; /* Start from top to include header */
 }
 
 .week-header {
@@ -62,11 +61,12 @@
   justify-content: center;
   background: #f0f0f0;
   border-radius: 4px;
-  padding: 5px 8px;
-  font-size: 0.85rem;
+  padding: 10px 8px;
+  font-size: 1rem;
   font-weight: 600;
   color: #667eea;
   flex: 1;
+  min-width: 45px;
 }
 
 .calendar-content {
@@ -221,8 +221,9 @@
   }
   
   .week-number {
-    padding: 3px 5px;
-    font-size: 0.75rem;
+    padding: 8px 5px;
+    font-size: 0.85rem;
+    min-width: 35px;
   }
   
   .week-header {
@@ -235,10 +236,6 @@
     padding: 8px;
     font-size: 0.8rem;
     height: 30px;
-  }
-  
-  .week-numbers {
-    padding-top: 30px;
   }
   
   .holiday-name {
