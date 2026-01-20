@@ -34,12 +34,14 @@
 .calendar-wrapper {
   display: flex;
   gap: 10px;
+  align-items: start;
 }
 
 .week-numbers {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  padding-top: 35px; /* Match the height of weekday headers */
 }
 
 .week-header {
@@ -48,6 +50,10 @@
   padding: 10px 5px;
   color: #667eea;
   font-size: 0.9rem;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .week-number {
@@ -60,8 +66,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: #667eea;
-  height: calc((100% - 35px - 5px) / 6); /* Adjust based on weekday header height and gaps */
-  min-height: 60px;
+  flex: 1;
 }
 
 .calendar-content {
@@ -73,6 +78,7 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 5px;
+  grid-auto-rows: 1fr; /* Make all rows equal height */
 }
 
 .weekday {
@@ -81,6 +87,10 @@
   padding: 10px;
   color: #667eea;
   font-size: 0.9rem;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .calendar-day {
@@ -213,12 +223,22 @@
   .week-number {
     padding: 3px 5px;
     font-size: 0.75rem;
-    min-height: 60px;
   }
   
   .week-header {
-    padding: 10px 3px;
+    padding: 8px 3px;
     font-size: 0.8rem;
+    height: 30px;
+  }
+  
+  .weekday {
+    padding: 8px;
+    font-size: 0.8rem;
+    height: 30px;
+  }
+  
+  .week-numbers {
+    padding-top: 30px;
   }
   
   .holiday-name {

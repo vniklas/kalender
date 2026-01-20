@@ -120,6 +120,10 @@ const Calendar = ({ events }: CalendarProps) => {
 
   const { days, weeks } = renderCalendarDays()
 
+  // Calculate rows in calendar (excluding header)
+  const totalCells = startingDayOfWeek + daysInMonth
+  const rows = Math.ceil(totalCells / 7)
+
   return (
     <div className="calendar">
       <div className="calendar-header">
@@ -129,8 +133,7 @@ const Calendar = ({ events }: CalendarProps) => {
       </div>
       
       <div className="calendar-wrapper">
-        <div className="week-numbers">
-          <div className="week-header">V.</div>
+        <div className="week-numbers" style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}>
           {weeks.map((weekNum, idx) => (
             <div key={idx} className="week-number">
               {weekNum}
@@ -139,7 +142,7 @@ const Calendar = ({ events }: CalendarProps) => {
         </div>
         
         <div className="calendar-content">
-          <div className="calendar-grid">
+          <div className="calendar-grid" style={{ gridTemplateRows: `35px repeat(${rows}, 1fr)` }}>
             <div className="weekday">Mån</div>
             <div className="weekday">Tis</div>
             <div className="weekday">Ons</div>
