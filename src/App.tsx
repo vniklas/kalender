@@ -202,8 +202,12 @@ function App() {
       new Date(a.date).getTime() - new Date(b.date).getTime()
     )
     
+    // Hitta den senaste händelsen
+    const lastEvent = sortedEvents[sortedEvents.length - 1]
+    const lastDate = new Date(lastEvent.date)
+    
     // Hitta alla växlingar (när förälder ändras)
-    const switches: { date: Date; parent: 'mom' | 'dad'; daysSinceLast: number }[] = []
+    const switches: { date: Date; parent: 'mom' | 'dad' }[] = []
     
     for (let i = 0; i < sortedEvents.length; i++) {
       const event = sortedEvents[i]
@@ -211,96 +215,126 @@ function App() {
       
       // Om det är första händelsen eller om föräldern byts
       if (!prevEvent || prevEvent.parent !== event.parent) {
-        const eventDate = new Date(event.date)
-        const daysSinceLast = prevEvent 
-          ? Math.round((eventDate.getTime() - new Date(prevEvent.date).getTime()) / (1000 * 60 * 60 * 24))
-          : 0
-        
         switches.push({
-          date: eventDate,
-          parent: event.parent,
-          daysSinceLast
+          date: new Date(event.date),
+          parent: event.parent
         })
       }
     }
     
-    if (switches.length < 2) {
-      alert('Behöver minst 2 växlingar i schemat för att kunna fortsätta mönstret')
+    if (switches.length === 0) {
+      alert('Kan inte fortsätta - inget befintligt schema att utgå från')
       return
     }
     
-    // Standardmönstret - 28 dagars cykel
-    const cyclePattern = [
-      { parent: 'dad' as const, days: 7, description: 'Vecka + helg hos pappa' },
-      { parent: 'mom' as const, days: 4, description: 'Vardagar hos mamma (måndag-fredag)' },
-      { parent: 'dad' as const, days: 7, description: 'Helg + vecka hos pappa' },
-      { parent: 'mom' as const, days: 10, description: 'Helg + vecka + helg hos mamma' },
-    ]
+    // Mönstret följer denna 28-dagars cykel:
+    // 1. Dad: Monday (7 dagar)
+    // 2. Mom: Monday (4 dagar) 
+    // 3. Dad: Friday (7 dagar)
+    // 4. Mom: Friday (10 dagar)
+    // Sen tillbaka till 1.
     
-    // Ta reda på var i cykeln vi är baserat på de senaste växlingarna
     const lastSwitch = switches[switches.length - 1]
+    const lastSwitchDate = new Date(lastSwitch.date)
+    const lastSwitchDay = lastSwitchDate.getDay() // 0=söndag, 1=måndag, 5=fredag
     
-    // Hitta nästa steg i cykeln
-    let nextCycleIndex = 0
+    // Bestäm var i cykeln vi är
+    let nextParent: 'mom' | 'dad'
+    let nextWeekday: number // 1=måndag, 5=fredag
+    let daysToAdd: number
     
-    // Leta igenom cykeln för att hitta vilket mönster vi är i
-    for (let i = 0; i < cyclePattern.length; i++) {
-      if (cyclePattern[i].parent === lastSwitch.parent) {
-        // Kolla om antalet dagar matchar (inom 1 dags marginal)
-        if (Math.abs(cyclePattern[i].days - lastSwitch.daysSinceLast) <= 1) {
-          nextCycleIndex = (i + 1) % cyclePattern.length
-          break
+    if (lastSwitch.parent === 'dad') {
+      // Efter pappa kommer mamma
+      nextParent = 'mom'
+      
+      if (lastSwitchDay === 1) { // Senaste växling var en måndag med pappa
+        // Nästa är måndag med mamma (4 dagar senare = fredag)
+        nextWeekday = 5 // Fredag
+        daysToAdd = 4
+      } else { // Senaste växling var en fredag med pappa
+        // Nästa är fredag med mamma (7 dagar senare = fredag nästa vecka, men mamma börjar på fredag så 10 dagar till måndag)
+        nextWeekday = 5 // Fredag -> men mamma ska ha 10 dagar som börjar fredag
+        daysToAdd = 7
+      }
+    } else {
+      // Efter mamma kommer pappa
+      nextParent = 'dad'
+      
+      if (lastSwitchDay === 1 || lastSwitchDay === 5) {
+        // Om mamma började på måndag (4 dagar) -> pappa börjar fredag
+        // Om mamma började på fredag (10 dagar) -> pappa börjar måndag
+        if (lastSwitchDay === 1) {
+          nextWeekday = 5 // Fredag
+          daysToAdd = 4
+        } else {
+          nextWeekday = 1 // Måndag
+          daysToAdd = 10
         }
+      } else {
+        // Fallback: växla bara förälder
+        nextWeekday = 1
+        daysToAdd = 7
       }
     }
     
-    // Om vi inte hittade en matchning, gissa baserat på vem som har barnet nu
-    if (nextCycleIndex === 0) {
-      // Hitta första mönstret med motsatt förälder
-      for (let i = 0; i < cyclePattern.length; i++) {
-        if (cyclePattern[i].parent !== lastSwitch.parent) {
-          nextCycleIndex = i
-          break
-        }
-      }
+    // Beräkna nästa växling från sista händelsen (inte från senaste växling)
+    let nextSwitchDate = new Date(lastDate)
+    
+    // Räkna ut hur många dagar från senaste växling till sista händelsen
+    const daysSinceSwitch = Math.floor((lastDate.getTime() - lastSwitchDate.getTime()) / (1000 * 60 * 60 * 24))
+    
+    // Räkna ut hur många dagar kvar till nästa växling
+    const daysUntilNextSwitch = daysToAdd - daysSinceSwitch
+    
+    if (daysUntilNextSwitch > 0) {
+      nextSwitchDate.setDate(lastDate.getDate() + daysUntilNextSwitch)
+    } else {
+      // Vi är redan förbi växlingen, börja från nästa cykel
+      nextSwitchDate.setDate(lastDate.getDate() + 1)
     }
-    
-    // Starta från dagen efter sista händelsen
-    const lastEvent = sortedEvents[sortedEvents.length - 1]
-    let nextDate = new Date(lastEvent.date)
-    
-    // Beräkna hur länge nuvarande period ska vara
-    const currentPeriodPattern = cyclePattern.find(p => p.parent === lastSwitch.parent) || cyclePattern[0]
-    const daysIntoCurrentPeriod = Math.round((nextDate.getTime() - lastSwitch.date.getTime()) / (1000 * 60 * 60 * 24))
-    const daysLeftInPeriod = Math.max(1, currentPeriodPattern.days - daysIntoCurrentPeriod)
-    
-    // Nästa växling
-    nextDate.setDate(nextDate.getDate() + daysLeftInPeriod)
     
     // Generera 3 månader framåt
-    const endDate = new Date(lastEvent.date)
+    const endDate = new Date(lastDate)
     endDate.setMonth(endDate.getMonth() + 3)
 
     const newEvents: ScheduleEvent[] = []
     let eventId = Date.now()
-    let cycleIndex = nextCycleIndex
     
-    while (nextDate <= endDate) {
-      const pattern = cyclePattern[cycleIndex]
+    // Cykelns mönster
+    const cycle = [
+      { parent: 'dad' as const, days: 7, weekday: 1, description: 'Vecka + helg hos pappa' },      // Måndag
+      { parent: 'mom' as const, days: 4, weekday: 1, description: 'Vardagar hos mamma (måndag-fredag)' }, // Måndag
+      { parent: 'dad' as const, days: 7, weekday: 5, description: 'Helg + vecka hos pappa' },      // Fredag
+      { parent: 'mom' as const, days: 10, weekday: 5, description: 'Helg + vecka + helg hos mamma' },   // Fredag
+    ]
+    
+    // Hitta var i cykeln nästa händelse ska vara
+    let cycleIndex = 0
+    for (let i = 0; i < cycle.length; i++) {
+      if (cycle[i].parent === nextParent && cycle[i].weekday === nextWeekday) {
+        cycleIndex = i
+        break
+      }
+    }
+    
+    let currentDate = nextSwitchDate
+    
+    while (currentDate <= endDate) {
+      const pattern = cycle[cycleIndex]
       
       newEvents.push({
         id: `continued-${eventId++}`,
         title: `Aston hos ${pattern.parent === 'dad' ? 'pappa' : 'mamma'}`,
-        date: formatDate(nextDate),
+        date: formatDate(currentDate),
         time: '18:00',
         description: pattern.description,
         parent: pattern.parent,
         type: 'other'
       })
       
-      nextDate = new Date(nextDate)
-      nextDate.setDate(nextDate.getDate() + pattern.days)
-      cycleIndex = (cycleIndex + 1) % cyclePattern.length
+      currentDate = new Date(currentDate)
+      currentDate.setDate(currentDate.getDate() + pattern.days)
+      cycleIndex = (cycleIndex + 1) % cycle.length
     }
 
     if (newEvents.length > 0) {
