@@ -163,6 +163,72 @@ function App() {
     setShowForm(false)
   }
 
+  const continueSchedule = () => {
+    if (events.length === 0) {
+      alert('Kan inte fortsätta - inget befintligt schema att utgå från')
+      return
+    }
+
+    // Hitta det senaste datumet i befintligt schema
+    const latestEvent = events.reduce((latest, event) => {
+      const eventDate = new Date(event.date)
+      const latestDate = new Date(latest.date)
+      return eventDate > latestDate ? event : latest
+    })
+
+    const lastDate = new Date(latestEvent.date)
+    
+    // Starta från nästa dag efter sista händelsen
+    let nextDate = new Date(lastDate)
+    nextDate.setDate(nextDate.getDate() + 1)
+    
+    // Generera 3 månader framåt från sista händelsen
+    const endDate = new Date(lastDate)
+    endDate.setMonth(endDate.getMonth() + 3)
+
+    const newEvents: ScheduleEvent[] = []
+    let eventId = Date.now()
+    
+    // Bestäm vem som har barn nu baserat på senaste händelsen
+    let currentParent = latestEvent.parent
+    
+    // Fortsätt med standardmönstret: 7 dagar hos en, byt, 4 dagar hos andra, byt, osv.
+    // Vi använder samma 28-dagars cykel som i generateInitialSchedule
+    const cyclePattern = [
+      { parent: 'dad' as const, days: 7, description: 'Vecka + helg hos pappa' },
+      { parent: 'mom' as const, days: 4, description: 'Vardagar hos mamma (måndag-fredag)' },
+      { parent: 'dad' as const, days: 7, description: 'Helg + vecka hos pappa' },
+      { parent: 'mom' as const, days: 10, description: 'Helg + vecka + helg hos mamma' },
+    ]
+    
+    // Hitta var i cykeln vi är baserat på senaste händelsens förälder
+    let cycleIndex = currentParent === 'dad' ? 0 : 1
+    
+    while (nextDate <= endDate) {
+      const pattern = cyclePattern[cycleIndex % cyclePattern.length]
+      
+      newEvents.push({
+        id: `continued-${eventId++}`,
+        title: `Aston hos ${pattern.parent === 'dad' ? 'pappa' : 'mamma'}`,
+        date: formatDate(nextDate),
+        time: '18:00',
+        description: pattern.description,
+        parent: pattern.parent,
+        type: 'other'
+      })
+      
+      nextDate.setDate(nextDate.getDate() + pattern.days)
+      cycleIndex++
+    }
+
+    if (newEvents.length > 0) {
+      updateEvents([...events, ...newEvents])
+      alert(`Lade till ${newEvents.length} nya händelser till schemat!`)
+    } else {
+      alert('Inga nya händelser att lägga till')
+    }
+  }
+
   const exportToCalendar = () => {
     // Generate ICS file content
     let icsContent = [
@@ -229,6 +295,13 @@ function App() {
             }}
           >
             {showForm ? 'Avbryt' : '+ Lägg till händelse'}
+          </button>
+          <button 
+            className="btn btn-continue" 
+            onClick={continueSchedule}
+            title="Fortsätt schemat 3 månader framåt"
+          >
+            ➡️ Fortsätt schema
           </button>
           <button 
             className="btn btn-export" 
