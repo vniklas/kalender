@@ -1,18 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ScheduleEvent } from '../App'
 import './EventForm.css'
 
 interface EventFormProps {
   onAddEvent: (event: Omit<ScheduleEvent, 'id'>) => void
+  initialEvent?: ScheduleEvent
+  isEditing?: boolean
+  onCancel?: () => void
 }
 
-const EventForm = ({ onAddEvent }: EventFormProps) => {
-  const [title, setTitle] = useState('')
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
-  const [description, setDescription] = useState('')
-  const [parent, setParent] = useState<'mom' | 'dad'>('mom')
-  const [type, setType] = useState<ScheduleEvent['type']>('other')
+const EventForm = ({ onAddEvent, initialEvent, isEditing = false, onCancel }: EventFormProps) => {
+  const [title, setTitle] = useState(initialEvent?.title || '')
+  const [date, setDate] = useState(initialEvent?.date || '')
+  const [time, setTime] = useState(initialEvent?.time || '')
+  const [description, setDescription] = useState(initialEvent?.description || '')
+  const [parent, setParent] = useState<'mom' | 'dad'>(initialEvent?.parent || 'mom')
+  const [type, setType] = useState<ScheduleEvent['type']>(initialEvent?.type || 'other')
+
+  useEffect(() => {
+    if (initialEvent) {
+      setTitle(initialEvent.title)
+      setDate(initialEvent.date)
+      setTime(initialEvent.time)
+      setDescription(initialEvent.description)
+      setParent(initialEvent.parent)
+      setType(initialEvent.type)
+    }
+  }, [initialEvent])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,18 +45,20 @@ const EventForm = ({ onAddEvent }: EventFormProps) => {
       type,
     })
 
-    // Reset form
-    setTitle('')
-    setDate('')
-    setTime('')
-    setDescription('')
-    setParent('mom')
-    setType('other')
+    // Reset form only if not editing
+    if (!isEditing) {
+      setTitle('')
+      setDate('')
+      setTime('')
+      setDescription('')
+      setParent('mom')
+      setType('other')
+    }
   }
 
   return (
     <div className="event-form-container">
-      <h2>Lägg till ny händelse</h2>
+      <h2>{isEditing ? 'Redigera händelse' : 'Lägg till ny händelse'}</h2>
       <form onSubmit={handleSubmit} className="event-form">
         <div className="form-group">
           <label htmlFor="title">Händelse *</label>
@@ -121,8 +137,13 @@ const EventForm = ({ onAddEvent }: EventFormProps) => {
         </div>
 
         <button type="submit" className="btn btn-primary">
-          Lägg till händelse
+          {isEditing ? 'Uppdatera händelse' : 'Lägg till händelse'}
         </button>
+        {isEditing && onCancel && (
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Avbryt
+          </button>
+        )}
       </form>
     </div>
   )

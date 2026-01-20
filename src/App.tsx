@@ -27,11 +27,14 @@ const generateInitialSchedule = (): ScheduleEvent[] => {
   const events: ScheduleEvent[] = []
   const today = new Date()
   
-  // Find the most recent Monday
+  // Find the most recent Monday (ensuring we get the right day)
   const currentDay = today.getDay()
   const daysToMonday = currentDay === 0 ? -6 : 1 - currentDay
-  const thisMonday = new Date(today)
-  thisMonday.setDate(today.getDate() + daysToMonday)
+  const thisMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + daysToMonday)
+  // Set time to noon to avoid timezone issues
+  thisMonday.setHours(12, 0, 0, 0)
+  
+  console.log('Today:', today.toDateString(), 'This Monday:', thisMonday.toDateString())
   
   // Week 1: Dad Monday -> Monday (7 days)
   const week1Start = new Date(thisMonday)
@@ -46,8 +49,8 @@ const generateInitialSchedule = (): ScheduleEvent[] => {
   })
   
   // Week 2: Mom Monday -> Friday (4 days)
-  const week2Start = new Date(week1Start)
-  week2Start.setDate(week1Start.getDate() + 7)
+  const week2Start = new Date(thisMonday)
+  week2Start.setDate(thisMonday.getDate() + 7)
   events.push({
     id: 'initial-2',
     title: 'Aston hos mamma',
@@ -59,8 +62,8 @@ const generateInitialSchedule = (): ScheduleEvent[] => {
   })
   
   // Week 2: Dad Friday -> Friday (7 days)
-  const week2Friday = new Date(week2Start)
-  week2Friday.setDate(week2Start.getDate() + 4)
+  const week2Friday = new Date(thisMonday)
+  week2Friday.setDate(thisMonday.getDate() + 11) // 7 days + 4 days = 11 days from first Monday
   events.push({
     id: 'initial-3',
     title: 'Aston hos pappa',
@@ -72,8 +75,8 @@ const generateInitialSchedule = (): ScheduleEvent[] => {
   })
   
   // Week 3: Mom Friday -> Monday (3 days weekend)
-  const week3Friday = new Date(week2Friday)
-  week3Friday.setDate(week2Friday.getDate() + 7)
+  const week3Friday = new Date(thisMonday)
+  week3Friday.setDate(thisMonday.getDate() + 18) // 11 + 7 = 18 days from first Monday
   events.push({
     id: 'initial-4',
     title: 'Aston hos mamma',
@@ -90,6 +93,7 @@ const generateInitialSchedule = (): ScheduleEvent[] => {
 function App() {
   const [events, setEvents] = useState<ScheduleEvent[]>(generateInitialSchedule())
   const [showForm, setShowForm] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null)
 
   const addEvent = (event: Omit<ScheduleEvent, 'id'>) => {
     const newEvent: ScheduleEvent = {
@@ -100,8 +104,20 @@ function App() {
     setShowForm(false)
   }
 
+  const updateEvent = (updatedEvent: ScheduleEvent) => {
+    setEvents(events.map(event => 
+      event.id === updatedEvent.id ? updatedEvent : event
+    ))
+    setEditingEvent(null)
+  }
+
   const deleteEvent = (id: string) => {
     setEvents(events.filter(event => event.id !== id))
+  }
+
+  const startEditing = (event: ScheduleEvent) => {
+    setEditingEvent(event)
+    setShowForm(false)
   }
 
   return (
@@ -115,20 +131,35 @@ function App() {
         <div className="controls">
           <button 
             className="btn btn-primary" 
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              setShowForm(!showForm)
+              setEditingEvent(null)
+            }}
           >
             {showForm ? 'Avbryt' : '+ Lägg till händelse'}
           </button>
         </div>
 
         {showForm && <EventForm onAddEvent={addEvent} />}
+        {editingEvent && (
+          <EventForm 
+            onAddEvent={(event) => updateEvent({ ...event, id: editingEvent.id })} 
+            initialEvent={editingEvent}
+            isEditing={true}
+            onCancel={() => setEditingEvent(null)}
+          />
+        )}
 
         <div className="content-grid">
           <div className="calendar-section">
             <Calendar events={events} />
           </div>
           <div className="events-section">
-            <EventList events={events} onDeleteEvent={deleteEvent} />
+            <EventList 
+              events={events} 
+              onDeleteEvent={deleteEvent}
+              onEditEvent={startEditing}
+            />
           </div>
         </div>
       </main>

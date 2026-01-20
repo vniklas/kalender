@@ -60,11 +60,13 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: #667eea;
-  min-height: 70px;
+  height: calc((100% - 35px - 5px) / 6); /* Adjust based on weekday header height and gaps */
+  min-height: 60px;
 }
 
 .calendar-content {
   flex: 1;
+  min-width: 0; /* Important for proper flex behavior */
 }
 
 .calendar-grid {
@@ -92,6 +94,7 @@
   position: relative;
   background: white;
   transition: background 0.2s ease;
+  min-height: 60px;
 }
 
 .calendar-day:hover {

@@ -4,9 +4,10 @@ import './EventList.css'
 interface EventListProps {
   events: ScheduleEvent[]
   onDeleteEvent: (id: string) => void
+  onEditEvent: (event: ScheduleEvent) => void
 }
 
-const EventList = ({ events, onDeleteEvent }: EventListProps) => {
+const EventList = ({ events, onDeleteEvent, onEditEvent }: EventListProps) => {
   const sortedEvents = [...events].sort((a, b) => {
     const dateA = new Date(`${a.date} ${a.time}`)
     const dateB = new Date(`${b.date} ${b.time}`)
@@ -57,13 +58,22 @@ const EventList = ({ events, onDeleteEvent }: EventListProps) => {
                     {event.parent === 'mom' ? '👩 Mamma' : '👨 Pappa'}
                   </span>
                 </div>
-                <button 
-                  className="btn btn-danger btn-small"
-                  onClick={() => onDeleteEvent(event.id)}
-                  title="Delete event"
-                >
-                  ✕
-                </button>
+                <div className="event-actions">
+                  <button 
+                    className="btn btn-edit btn-small"
+                    onClick={() => onEditEvent(event)}
+                    title="Redigera händelse"
+                  >
+                    ✏️
+                  </button>
+                  <button 
+                    className="btn btn-danger btn-small"
+                    onClick={() => onDeleteEvent(event.id)}
+                    title="Ta bort händelse"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
               <div className="event-details">
                 <div className="event-datetime">

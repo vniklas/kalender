@@ -50,6 +50,22 @@
   margin-bottom: 10px;
 }
 
+.event-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.btn-edit {
+  background-color: #ff9800;
+  color: white;
+  padding: 5px 10px;
+  font-size: 0.9rem;
+}
+
+.btn-edit:hover {
+  background-color: #e68900;
+}
+
 .event-icon {
   font-size: 1.5rem;
 }
