@@ -1,18 +1,30 @@
-# Kid Schedule Manager
+# Astons Schema
 
-A web application to help organize and coordinate your child's schedule.
+En webbapplikation för att organisera och koordinera Astons schema mellan mamma och pappa.
 
-## Features
-- Add and manage events/activities
-- Share schedule between parents
-- Calendar view
-- Notifications and reminders
+## Funktioner
+- 📅 Kalendervyn med veckonummer
+- ➕ Lägg till och redigera händelser/aktiviteter
+- 🔄 Automatiskt upprepande schema för 5 månader framåt
+- 📱 Exportera till Apple Kalender (iOS/macOS)
+- 👨‍👩‍👧 Dela schema mellan föräldrar
+- 🇸🇪 Helt på svenska
 
-## Getting Started
+## Exportera till Apple Kalender
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
+1. Klicka på "📅 Exportera till Kalender" knappen
+2. En fil `astons-schema.ics` kommer att laddas ner
+3. **På Mac**: Dubbelklicka på filen så öppnas den automatiskt i Kalender-appen
+4. **På iPhone/iPad**: 
+   - Öppna filen från nedladdningar
+   - Tryck "Lägg till alla"
+   - Välj vilken kalender du vill lägga till händelserna i
+
+## Kom igång
+
+### Förutsättningar
+- Node.js (v16 eller högre)
+- npm eller yarn
 
 ### Installation
 
@@ -20,19 +32,30 @@ A web application to help organize and coordinate your child's schedule.
 npm install
 ```
 
-### Development
+### Utveckling
 
 ```bash
 npm run dev
 ```
 
-### Build
+### Bygg för produktion
 
 ```bash
 npm run build
 ```
 
-## Tech Stack
-- Frontend: React with TypeScript
+## Teknisk stack
+- Frontend: React med TypeScript
 - Styling: CSS
-- Build Tool: Vite
+- Byggverktyg: Vite
+- Kalenderexport: iCalendar (.ics) format
+
+## Astons Schema
+
+Appen är förkonfigurerad med Astons återkommande schema:
+- **Vecka 1**: Hos pappa (måndag → måndag, 7 dagar)
+- **Vecka 2**: Hos mamma (måndag → fredag, 4 dagar)
+- **Vecka 2-3**: Hos pappa (fredag → fredag, 7 dagar)
+- **Vecka 3**: Hos mamma (fredag → måndag, helg)
+
+Schemat upprepar sig automatiskt i 21-dagars cykler och genereras 5 månader framåt.

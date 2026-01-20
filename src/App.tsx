@@ -22,7 +22,7 @@ const formatDate = (date: Date): string => {
   return `${year}-${month}-${day}`
 }
 
-// Generate initial schedule for Aston
+// Generate initial schedule for Aston - repeating for 5 months
 const generateInitialSchedule = (): ScheduleEvent[] => {
   const events: ScheduleEvent[] = []
   const today = new Date()
@@ -30,62 +30,85 @@ const generateInitialSchedule = (): ScheduleEvent[] => {
   // Find the most recent Monday (ensuring we get the right day)
   const currentDay = today.getDay()
   const daysToMonday = currentDay === 0 ? -6 : 1 - currentDay
-  const thisMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + daysToMonday)
-  // Set time to noon to avoid timezone issues
-  thisMonday.setHours(12, 0, 0, 0)
+  const startMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + daysToMonday)
+  startMonday.setHours(12, 0, 0, 0)
   
-  console.log('Today:', today.toDateString(), 'This Monday:', thisMonday.toDateString())
+  // Calculate end date (5 months from now)
+  const endDate = new Date(today)
+  endDate.setMonth(today.getMonth() + 5)
   
+  console.log('Start Monday:', startMonday.toDateString(), 'End Date:', endDate.toDateString())
+  
+  // The pattern repeats every 21 days (3 weeks)
   // Week 1: Dad Monday -> Monday (7 days)
-  const week1Start = new Date(thisMonday)
-  events.push({
-    id: 'initial-1',
-    title: 'Aston hos pappa',
-    date: formatDate(week1Start),
-    time: '18:00',
-    description: 'En vecka hos pappa',
-    parent: 'dad',
-    type: 'other'
-  })
-  
   // Week 2: Mom Monday -> Friday (4 days)
-  const week2Start = new Date(thisMonday)
-  week2Start.setDate(thisMonday.getDate() + 7)
-  events.push({
-    id: 'initial-2',
-    title: 'Aston hos mamma',
-    date: formatDate(week2Start),
-    time: '18:00',
-    description: 'Måndag till fredag hos mamma',
-    parent: 'mom',
-    type: 'other'
-  })
+  // Week 2-3: Dad Friday -> Friday (7 days)
+  // Week 3: Mom Friday -> Monday (3 days)
   
-  // Week 2: Dad Friday -> Friday (7 days)
-  const week2Friday = new Date(thisMonday)
-  week2Friday.setDate(thisMonday.getDate() + 11) // 7 days + 4 days = 11 days from first Monday
-  events.push({
-    id: 'initial-3',
-    title: 'Aston hos pappa',
-    date: formatDate(week2Friday),
-    time: '18:00',
-    description: 'En vecka hos pappa (fredag till fredag)',
-    parent: 'dad',
-    type: 'other'
-  })
+  let eventId = 1
+  let cycleStart = new Date(startMonday)
   
-  // Week 3: Mom Friday -> Monday (3 days weekend)
-  const week3Friday = new Date(thisMonday)
-  week3Friday.setDate(thisMonday.getDate() + 18) // 11 + 7 = 18 days from first Monday
-  events.push({
-    id: 'initial-4',
-    title: 'Aston hos mamma',
-    date: formatDate(week3Friday),
-    time: '18:00',
-    description: 'Helg hos mamma (fredag till måndag)',
-    parent: 'mom',
-    type: 'other'
-  })
+  while (cycleStart <= endDate) {
+    // Week 1: Dad Monday -> Monday (7 days)
+    const dadWeek1 = new Date(cycleStart)
+    events.push({
+      id: `cycle-${eventId++}`,
+      title: 'Aston hos pappa',
+      date: formatDate(dadWeek1),
+      time: '18:00',
+      description: 'En vecka hos pappa',
+      parent: 'dad',
+      type: 'other'
+    })
+    
+    // Week 2: Mom Monday -> Friday (4 days)
+    const momWeek2 = new Date(cycleStart)
+    momWeek2.setDate(cycleStart.getDate() + 7)
+    if (momWeek2 <= endDate) {
+      events.push({
+        id: `cycle-${eventId++}`,
+        title: 'Aston hos mamma',
+        date: formatDate(momWeek2),
+        time: '18:00',
+        description: 'Måndag till fredag hos mamma',
+        parent: 'mom',
+        type: 'other'
+      })
+    }
+    
+    // Week 2-3: Dad Friday -> Friday (7 days)
+    const dadFriday = new Date(cycleStart)
+    dadFriday.setDate(cycleStart.getDate() + 11)
+    if (dadFriday <= endDate) {
+      events.push({
+        id: `cycle-${eventId++}`,
+        title: 'Aston hos pappa',
+        date: formatDate(dadFriday),
+        time: '18:00',
+        description: 'En vecka hos pappa (fredag till fredag)',
+        parent: 'dad',
+        type: 'other'
+      })
+    }
+    
+    // Week 3: Mom Friday -> Monday (3 days weekend)
+    const momFriday = new Date(cycleStart)
+    momFriday.setDate(cycleStart.getDate() + 18)
+    if (momFriday <= endDate) {
+      events.push({
+        id: `cycle-${eventId++}`,
+        title: 'Aston hos mamma',
+        date: formatDate(momFriday),
+        time: '18:00',
+        description: 'Helg hos mamma (fredag till måndag)',
+        parent: 'mom',
+        type: 'other'
+      })
+    }
+    
+    // Move to next cycle (21 days later)
+    cycleStart.setDate(cycleStart.getDate() + 21)
+  }
   
   return events
 }
@@ -120,6 +143,55 @@ function App() {
     setShowForm(false)
   }
 
+  const exportToCalendar = () => {
+    // Generate ICS file content
+    let icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Astons Schema//SE',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:Astons Schema',
+      'X-WR-TIMEZONE:Europe/Stockholm',
+    ]
+
+    events.forEach(event => {
+      const eventDate = new Date(event.date + 'T' + event.time)
+      const endDate = new Date(eventDate)
+      endDate.setHours(endDate.getHours() + 1) // 1 hour duration by default
+
+      // Format dates for ICS (YYYYMMDDTHHmmss)
+      const formatICSDate = (date: Date) => {
+        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+      }
+
+      icsContent.push(
+        'BEGIN:VEVENT',
+        `UID:${event.id}@astons-schema`,
+        `DTSTAMP:${formatICSDate(new Date())}`,
+        `DTSTART:${formatICSDate(eventDate)}`,
+        `DTEND:${formatICSDate(endDate)}`,
+        `SUMMARY:${event.title}`,
+        `DESCRIPTION:${event.description}`,
+        `LOCATION:${event.parent === 'dad' ? 'Hos pappa' : 'Hos mamma'}`,
+        'STATUS:CONFIRMED',
+        'END:VEVENT'
+      )
+    })
+
+    icsContent.push('END:VCALENDAR')
+
+    // Create and download the ICS file
+    const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = 'astons-schema.ics'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(link.href)
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -137,6 +209,13 @@ function App() {
             }}
           >
             {showForm ? 'Avbryt' : '+ Lägg till händelse'}
+          </button>
+          <button 
+            className="btn btn-export" 
+            onClick={exportToCalendar}
+            title="Exportera till Apple Kalender"
+          >
+            📅 Exportera till Kalender
           </button>
         </div>
 
