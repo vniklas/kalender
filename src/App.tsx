@@ -163,6 +163,34 @@ function App() {
     setShowForm(false)
   }
 
+  const cleanupFutureEvents = () => {
+    const cutoffDateStr = prompt('Ta bort alla händelser från och med datum (ÅÅÅÅ-MM-DD):')
+    
+    if (!cutoffDateStr) return // Användaren avbröt
+    
+    // Validera datumet
+    const cutoffDate = new Date(cutoffDateStr)
+    if (isNaN(cutoffDate.getTime())) {
+      alert('Ogiltigt datumformat. Använd ÅÅÅÅ-MM-DD (t.ex. 2026-02-15)')
+      return
+    }
+    
+    // Räkna hur många händelser som kommer tas bort
+    const eventsToKeep = events.filter(event => new Date(event.date) < cutoffDate)
+    const eventsToRemove = events.length - eventsToKeep.length
+    
+    if (eventsToRemove === 0) {
+      alert('Inga händelser att ta bort efter det datumet.')
+      return
+    }
+    
+    // Bekräfta med användaren
+    if (confirm(`Detta kommer ta bort ${eventsToRemove} händelse(r) från och med ${cutoffDateStr}. Är du säker?`)) {
+      updateEvents(eventsToKeep)
+      alert(`${eventsToRemove} händelse(r) borttagna!`)
+    }
+  }
+
   const continueSchedule = () => {
     if (events.length === 0) {
       alert('Kan inte fortsätta - inget befintligt schema att utgå från')
@@ -324,6 +352,13 @@ function App() {
             title="Fortsätt schemat 3 månader framåt"
           >
             ➡️ Fortsätt schema
+          </button>
+          <button 
+            className="btn btn-cleanup" 
+            onClick={cleanupFutureEvents}
+            title="Ta bort händelser från ett visst datum"
+          >
+            🧹 Rensa framtida
           </button>
           <button 
             className="btn btn-export" 
