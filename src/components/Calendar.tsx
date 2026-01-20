@@ -9,13 +9,23 @@ interface CalendarProps {
 const Calendar = ({ events }: CalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date())
 
+  // Get ISO week number
+  const getWeekNumber = (date: Date): number => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+    const dayNum = d.getUTCDay() || 7
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  }
+
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear()
     const month = date.getMonth()
     const firstDay = new Date(year, month, 1)
     const lastDay = new Date(year, month + 1, 0)
     const daysInMonth = lastDay.getDate()
-    const startingDayOfWeek = firstDay.getDay()
+    // In Sweden, week starts on Monday (adjust Sunday from 0 to 7)
+    const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1
 
     return { daysInMonth, startingDayOfWeek }
   }
@@ -34,10 +44,11 @@ const Calendar = ({ events }: CalendarProps) => {
   }
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate)
-  const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const monthName = currentDate.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' })
 
   const renderCalendarDays = () => {
     const days = []
+    const weeks: number[] = []
     
     // Empty cells for days before month starts
     for (let i = 0; i < startingDayOfWeek; i++) {
@@ -49,6 +60,12 @@ const Calendar = ({ events }: CalendarProps) => {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
       const dayEvents = getEventsForDate(date)
       const isToday = new Date().toDateString() === date.toDateString()
+      
+      // Track week numbers (one per week)
+      const dayOfWeek = date.getDay() === 0 ? 6 : date.getDay() - 1
+      if (dayOfWeek === 0 || day === 1) {
+        weeks.push(getWeekNumber(date))
+      }
 
       days.push(
         <div key={day} className={`calendar-day ${isToday ? 'today' : ''}`}>
@@ -68,8 +85,10 @@ const Calendar = ({ events }: CalendarProps) => {
       )
     }
 
-    return days
+    return { days, weeks }
   }
+
+  const { days, weeks } = renderCalendarDays()
 
   return (
     <div className="calendar">
@@ -79,26 +98,39 @@ const Calendar = ({ events }: CalendarProps) => {
         <button onClick={nextMonth} className="nav-btn">›</button>
       </div>
       
-      <div className="calendar-grid">
-        <div className="weekday">Sun</div>
-        <div className="weekday">Mon</div>
-        <div className="weekday">Tue</div>
-        <div className="weekday">Wed</div>
-        <div className="weekday">Thu</div>
-        <div className="weekday">Fri</div>
-        <div className="weekday">Sat</div>
+      <div className="calendar-wrapper">
+        <div className="week-numbers">
+          <div className="week-header">V.</div>
+          {weeks.map((weekNum, idx) => (
+            <div key={idx} className="week-number">
+              {weekNum}
+            </div>
+          ))}
+        </div>
         
-        {renderCalendarDays()}
+        <div className="calendar-content">
+          <div className="calendar-grid">
+            <div className="weekday">Mån</div>
+            <div className="weekday">Tis</div>
+            <div className="weekday">Ons</div>
+            <div className="weekday">Tor</div>
+            <div className="weekday">Fre</div>
+            <div className="weekday">Lör</div>
+            <div className="weekday">Sön</div>
+            
+            {days}
+          </div>
+        </div>
       </div>
 
       <div className="calendar-legend">
         <div className="legend-item">
           <div className="legend-dot mom"></div>
-          <span>Mom</span>
+          <span>Mamma</span>
         </div>
         <div className="legend-item">
           <div className="legend-dot dad"></div>
-          <span>Dad</span>
+          <span>Pappa</span>
         </div>
       </div>
     </div>

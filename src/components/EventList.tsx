@@ -30,7 +30,7 @@ const EventList = ({ events, onDeleteEvent }: EventListProps) => {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('sv-SE', { 
       weekday: 'short', 
       month: 'short', 
       day: 'numeric' 
@@ -39,11 +39,11 @@ const EventList = ({ events, onDeleteEvent }: EventListProps) => {
 
   return (
     <div className="event-list">
-      <h2>Upcoming Events</h2>
+      <h2>Kommande händelser</h2>
       {events.length === 0 ? (
         <div className="empty-state">
-          <p>No events scheduled yet.</p>
-          <p>Click "Add Event" to get started!</p>
+          <p>Inga händelser inlagda än.</p>
+          <p>Klicka på "Lägg till händelse" för att komma igång!</p>
         </div>
       ) : (
         <div className="events">
@@ -54,7 +54,7 @@ const EventList = ({ events, onDeleteEvent }: EventListProps) => {
                 <div className="event-title-group">
                   <h3>{event.title}</h3>
                   <span className={`event-badge ${event.parent}`}>
-                    {event.parent === 'mom' ? '👩 Mom' : '👨 Dad'}
+                    {event.parent === 'mom' ? '👩 Mamma' : '👨 Pappa'}
                   </span>
                 </div>
                 <button 
