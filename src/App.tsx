@@ -197,77 +197,109 @@ function App() {
       return
     }
 
-    // Sortera alla händelser och hitta de två senaste för att förstå var vi är i cykeln
+    // Sortera alla händelser kronologiskt
     const sortedEvents = [...events].sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     )
     
-    const latestEvent = sortedEvents[sortedEvents.length - 1]
-    const secondLatestEvent = sortedEvents.length > 1 ? sortedEvents[sortedEvents.length - 2] : null
+    // Hitta alla växlingar (när förälder ändras)
+    const switches: { date: Date; parent: 'mom' | 'dad'; daysSinceLast: number }[] = []
     
-    // Beräkna hur många dagar som gått sedan senaste växlingen
-    let daysSinceLastSwitch = 0
-    if (secondLatestEvent && secondLatestEvent.parent !== latestEvent.parent) {
-      const lastDate = new Date(latestEvent.date)
-      const secondLastDate = new Date(secondLatestEvent.date)
-      daysSinceLastSwitch = Math.floor((lastDate.getTime() - secondLastDate.getTime()) / (1000 * 60 * 60 * 24))
+    for (let i = 0; i < sortedEvents.length; i++) {
+      const event = sortedEvents[i]
+      const prevEvent = i > 0 ? sortedEvents[i - 1] : null
+      
+      // Om det är första händelsen eller om föräldern byts
+      if (!prevEvent || prevEvent.parent !== event.parent) {
+        const eventDate = new Date(event.date)
+        const daysSinceLast = prevEvent 
+          ? Math.round((eventDate.getTime() - new Date(prevEvent.date).getTime()) / (1000 * 60 * 60 * 24))
+          : 0
+        
+        switches.push({
+          date: eventDate,
+          parent: event.parent,
+          daysSinceLast
+        })
+      }
     }
     
-    // Standardmönstret i cykeln
+    if (switches.length < 2) {
+      alert('Behöver minst 2 växlingar i schemat för att kunna fortsätta mönstret')
+      return
+    }
+    
+    // Standardmönstret - 28 dagars cykel
     const cyclePattern = [
-      { parent: 'dad' as const, days: 7, description: 'Vecka + helg hos pappa', startDay: 'måndag' },
-      { parent: 'mom' as const, days: 4, description: 'Vardagar hos mamma (måndag-fredag)', startDay: 'måndag' },
-      { parent: 'dad' as const, days: 7, description: 'Helg + vecka hos pappa', startDay: 'fredag' },
-      { parent: 'mom' as const, days: 10, description: 'Helg + vecka + helg hos mamma', startDay: 'fredag' },
+      { parent: 'dad' as const, days: 7, description: 'Vecka + helg hos pappa' },
+      { parent: 'mom' as const, days: 4, description: 'Vardagar hos mamma (måndag-fredag)' },
+      { parent: 'dad' as const, days: 7, description: 'Helg + vecka hos pappa' },
+      { parent: 'mom' as const, days: 10, description: 'Helg + vecka + helg hos mamma' },
     ]
     
-    // Hitta vilken del av cykeln vi är i nu
-    let currentCycleIndex = 0
-    const currentParent = latestEvent.parent
+    // Ta reda på var i cykeln vi är baserat på de senaste växlingarna
+    const lastSwitch = switches[switches.length - 1]
     
-    // Försök matcha baserat på förälder och antal dagar
+    // Hitta nästa steg i cykeln
+    let nextCycleIndex = 0
+    
+    // Leta igenom cykeln för att hitta vilket mönster vi är i
     for (let i = 0; i < cyclePattern.length; i++) {
-      if (cyclePattern[i].parent === currentParent) {
-        if (daysSinceLastSwitch === 0 || Math.abs(cyclePattern[i].days - daysSinceLastSwitch) <= 1) {
-          currentCycleIndex = i
+      if (cyclePattern[i].parent === lastSwitch.parent) {
+        // Kolla om antalet dagar matchar (inom 1 dags marginal)
+        if (Math.abs(cyclePattern[i].days - lastSwitch.daysSinceLast) <= 1) {
+          nextCycleIndex = (i + 1) % cyclePattern.length
           break
         }
       }
     }
     
-    // Beräkna hur många dagar kvar i nuvarande period
-    const currentPattern = cyclePattern[currentCycleIndex]
-    const daysLeft = currentPattern.days - daysSinceLastSwitch
+    // Om vi inte hittade en matchning, gissa baserat på vem som har barnet nu
+    if (nextCycleIndex === 0) {
+      // Hitta första mönstret med motsatt förälder
+      for (let i = 0; i < cyclePattern.length; i++) {
+        if (cyclePattern[i].parent !== lastSwitch.parent) {
+          nextCycleIndex = i
+          break
+        }
+      }
+    }
     
-    // Nästa växling sker efter daysLeft dagar
-    const lastDate = new Date(latestEvent.date)
-    let nextSwitchDate = new Date(lastDate)
-    nextSwitchDate.setDate(lastDate.getDate() + daysLeft)
+    // Starta från dagen efter sista händelsen
+    const lastEvent = sortedEvents[sortedEvents.length - 1]
+    let nextDate = new Date(lastEvent.date)
+    
+    // Beräkna hur länge nuvarande period ska vara
+    const currentPeriodPattern = cyclePattern.find(p => p.parent === lastSwitch.parent) || cyclePattern[0]
+    const daysIntoCurrentPeriod = Math.round((nextDate.getTime() - lastSwitch.date.getTime()) / (1000 * 60 * 60 * 24))
+    const daysLeftInPeriod = Math.max(1, currentPeriodPattern.days - daysIntoCurrentPeriod)
+    
+    // Nästa växling
+    nextDate.setDate(nextDate.getDate() + daysLeftInPeriod)
     
     // Generera 3 månader framåt
-    const endDate = new Date(lastDate)
+    const endDate = new Date(lastEvent.date)
     endDate.setMonth(endDate.getMonth() + 3)
 
     const newEvents: ScheduleEvent[] = []
     let eventId = Date.now()
+    let cycleIndex = nextCycleIndex
     
-    // Börja från nästa person i cykeln
-    let cycleIndex = (currentCycleIndex + 1) % cyclePattern.length
-    
-    while (nextSwitchDate <= endDate) {
+    while (nextDate <= endDate) {
       const pattern = cyclePattern[cycleIndex]
       
       newEvents.push({
         id: `continued-${eventId++}`,
         title: `Aston hos ${pattern.parent === 'dad' ? 'pappa' : 'mamma'}`,
-        date: formatDate(nextSwitchDate),
+        date: formatDate(nextDate),
         time: '18:00',
         description: pattern.description,
         parent: pattern.parent,
         type: 'other'
       })
       
-      nextSwitchDate.setDate(nextSwitchDate.getDate() + pattern.days)
+      nextDate = new Date(nextDate)
+      nextDate.setDate(nextDate.getDate() + pattern.days)
       cycleIndex = (cycleIndex + 1) % cyclePattern.length
     }
 
