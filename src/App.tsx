@@ -114,33 +114,62 @@ const generateInitialSchedule = (): ScheduleEvent[] => {
 }
 
 function App() {
-  const [events, setEvents] = useState<ScheduleEvent[]>(generateInitialSchedule())
+  // Load events from localStorage or generate initial schedule
+  const loadEvents = (): ScheduleEvent[] => {
+    const saved = localStorage.getItem('astons-schema-events')
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch (e) {
+        console.error('Failed to load saved events:', e)
+        return generateInitialSchedule()
+      }
+    }
+    return generateInitialSchedule()
+  }
+
+  const [events, setEvents] = useState<ScheduleEvent[]>(loadEvents())
   const [showForm, setShowForm] = useState(false)
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null)
+
+  // Save events to localStorage whenever they change
+  const updateEvents = (newEvents: ScheduleEvent[]) => {
+    setEvents(newEvents)
+    localStorage.setItem('astons-schema-events', JSON.stringify(newEvents))
+  }
 
   const addEvent = (event: Omit<ScheduleEvent, 'id'>) => {
     const newEvent: ScheduleEvent = {
       ...event,
       id: Date.now().toString(),
     }
-    setEvents([...events, newEvent])
+    updateEvents([...events, newEvent])
     setShowForm(false)
   }
 
   const updateEvent = (updatedEvent: ScheduleEvent) => {
-    setEvents(events.map(event => 
+    updateEvents(events.map(event => 
       event.id === updatedEvent.id ? updatedEvent : event
     ))
     setEditingEvent(null)
   }
 
   const deleteEvent = (id: string) => {
-    setEvents(events.filter(event => event.id !== id))
+    updateEvents(events.filter(event => event.id !== id))
   }
 
   const startEditing = (event: ScheduleEvent) => {
     setEditingEvent(event)
     setShowForm(false)
+  }
+
+  const resetSchedule = () => {
+    if (confirm('Är du säker på att du vill återställa schemat till ursprungligt läge? Alla tillagda och redigerade händelser kommer att försvinna.')) {
+      const initialSchedule = generateInitialSchedule()
+      updateEvents(initialSchedule)
+      setEditingEvent(null)
+      setShowForm(false)
+    }
   }
 
   const exportToCalendar = () => {
@@ -216,6 +245,13 @@ function App() {
             title="Exportera till Apple Kalender"
           >
             📅 Exportera till Kalender
+          </button>
+          <button 
+            className="btn btn-reset" 
+            onClick={resetSchedule}
+            title="Återställ till ursprungligt schema"
+          >
+            🔄 Återställ schema
           </button>
         </div>
 

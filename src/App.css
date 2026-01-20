@@ -78,6 +78,17 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+.btn-reset {
+  background-color: #ff9800;
+  color: white;
+}
+
+.btn-reset:hover {
+  background-color: #e68900;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

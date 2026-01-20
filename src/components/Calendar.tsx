@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ScheduleEvent } from '../App'
 import './Calendar.css'
 
@@ -8,6 +8,12 @@ interface CalendarProps {
 
 const Calendar = ({ events }: CalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [, forceUpdate] = useState({})
+
+  // Force re-render when events change
+  useEffect(() => {
+    forceUpdate({})
+  }, [events])
 
   // Get ISO week number
   const getWeekNumber = (date: Date): number => {
