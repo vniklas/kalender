@@ -120,3 +120,16 @@
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+.app-footer {
+  text-align: center;
+  padding: 20px;
+  margin-top: 40px;
+  color: #666;
+  font-size: 0.875rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.app-footer p {
+  margin: 0;
+}

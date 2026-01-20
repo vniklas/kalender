@@ -4,6 +4,8 @@ import Calendar from './components/Calendar'
 import EventForm from './components/EventForm'
 import EventList from './components/EventList'
 
+const APP_VERSION = '1.1.0'
+
 export interface ScheduleEvent {
   id: string
   title: string
@@ -490,6 +492,10 @@ function App() {
           </div>
         </div>
       </main>
+      
+      <footer className="app-footer">
+        <p>Version {APP_VERSION}</p>
+      </footer>
     </div>
   )
 }
