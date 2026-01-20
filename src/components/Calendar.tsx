@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { ScheduleEvent } from '../App'
+import { getSwedishHolidays, getHolidayForDate, Holiday } from '../utils/swedishHolidays'
 import './Calendar.css'
 
 interface CalendarProps {
@@ -9,6 +10,11 @@ interface CalendarProps {
 const Calendar = ({ events }: CalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [, forceUpdate] = useState({})
+
+  // Get holidays for current year
+  const holidays = useMemo(() => {
+    return getSwedishHolidays(currentDate.getFullYear())
+  }, [currentDate])
 
   // Force re-render when events change
   useEffect(() => {
@@ -45,6 +51,14 @@ const Calendar = ({ events }: CalendarProps) => {
     return events.filter(event => event.date === dateStr)
   }
 
+  const getHolidayForDay = (date: Date): Holiday | undefined => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+    return getHolidayForDate(dateStr, holidays)
+  }
+
   const previousMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))
   }
@@ -69,7 +83,9 @@ const Calendar = ({ events }: CalendarProps) => {
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
       const dayEvents = getEventsForDate(date)
+      const holiday = getHolidayForDay(date)
       const isToday = new Date().toDateString() === date.toDateString()
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6
       
       // Track week numbers (one per week)
       const dayOfWeek = date.getDay() === 0 ? 6 : date.getDay() - 1
@@ -78,8 +94,12 @@ const Calendar = ({ events }: CalendarProps) => {
       }
 
       days.push(
-        <div key={day} className={`calendar-day ${isToday ? 'today' : ''}`}>
-          <div className="day-number">{day}</div>
+        <div key={day} className={`calendar-day ${isToday ? 'today' : ''} ${holiday?.type === 'public' ? 'holiday' : ''} ${isWeekend ? 'weekend' : ''}`}>
+          <div className="day-number">
+            {day}
+            {holiday && <span className="holiday-indicator" title={holiday.name}>🇸🇪</span>}
+          </div>
+          {holiday && <div className="holiday-name">{holiday.name}</div>}
           {dayEvents.length > 0 && (
             <div className="day-events">
               {dayEvents.map(event => (
