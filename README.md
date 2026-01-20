@@ -52,10 +52,10 @@ npm run build
 
 ## Astons Schema
 
-Appen är förkonfigurerad med Astons återkommande schema:
-- **Vecka 1**: Hos pappa (måndag → måndag, 7 dagar)
-- **Vecka 2**: Hos mamma (måndag → fredag, 4 dagar)
-- **Vecka 2-3**: Hos pappa (fredag → fredag, 7 dagar)
-- **Vecka 3**: Hos mamma (fredag → måndag, helg)
+Appen är förkonfigurerad med Astons återkommande schema (28-dagars cykel):
+1. **Pappa**: Måndag → Måndag (7 dagar) - vecka + helg
+2. **Mamma**: Måndag → Fredag (4 dagar) - endast vardagar
+3. **Pappa**: Fredag → Fredag (7 dagar) - helg + vecka
+4. **Mamma**: Fredag → Måndag (10 dagar) - helg + vecka + helg
 
-Schemat upprepar sig automatiskt i 21-dagars cykler och genereras 5 månader framåt.
+Schemat upprepar sig automatiskt i 28-dagars (4 veckor) cykler och genereras 5 månader framåt.

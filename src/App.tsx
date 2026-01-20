@@ -39,75 +39,75 @@ const generateInitialSchedule = (): ScheduleEvent[] => {
   
   console.log('Start Monday:', startMonday.toDateString(), 'End Date:', endDate.toDateString())
   
-  // The pattern repeats every 21 days (3 weeks)
-  // Week 1: Dad Monday -> Monday (7 days)
-  // Week 2: Mom Monday -> Friday (4 days)
-  // Week 2-3: Dad Friday -> Friday (7 days)
-  // Week 3: Mom Friday -> Monday (3 days)
+  // The pattern repeats every 28 days (4 weeks):
+  // 1. Dad: Monday -> Monday (7 days) - week + weekend
+  // 2. Mom: Monday -> Friday (4 days) - weekdays only
+  // 3. Dad: Friday -> Friday (7 days) - weekend + week
+  // 4. Mom: Friday -> Monday (10 days) - weekend + week + weekend
   
   let eventId = 1
   let cycleStart = new Date(startMonday)
   
   while (cycleStart <= endDate) {
-    // Week 1: Dad Monday -> Monday (7 days)
-    const dadWeek1 = new Date(cycleStart)
+    // 1. Dad Monday -> Monday (7 days)
+    const dadMonday = new Date(cycleStart)
     events.push({
       id: `cycle-${eventId++}`,
       title: 'Aston hos pappa',
-      date: formatDate(dadWeek1),
+      date: formatDate(dadMonday),
       time: '18:00',
-      description: 'En vecka hos pappa',
+      description: 'Vecka + helg hos pappa (7 dagar)',
       parent: 'dad',
       type: 'other'
     })
     
-    // Week 2: Mom Monday -> Friday (4 days)
-    const momWeek2 = new Date(cycleStart)
-    momWeek2.setDate(cycleStart.getDate() + 7)
-    if (momWeek2 <= endDate) {
+    // 2. Mom Monday -> Friday (4 days)
+    const momMonday = new Date(cycleStart)
+    momMonday.setDate(cycleStart.getDate() + 7)
+    if (momMonday <= endDate) {
       events.push({
         id: `cycle-${eventId++}`,
         title: 'Aston hos mamma',
-        date: formatDate(momWeek2),
+        date: formatDate(momMonday),
         time: '18:00',
-        description: 'Måndag till fredag hos mamma',
+        description: 'Vardagar hos mamma (måndag-fredag)',
         parent: 'mom',
         type: 'other'
       })
     }
     
-    // Week 2-3: Dad Friday -> Friday (7 days)
+    // 3. Dad Friday -> Friday (7 days)
     const dadFriday = new Date(cycleStart)
-    dadFriday.setDate(cycleStart.getDate() + 11)
+    dadFriday.setDate(cycleStart.getDate() + 11) // 7 + 4 = 11
     if (dadFriday <= endDate) {
       events.push({
         id: `cycle-${eventId++}`,
         title: 'Aston hos pappa',
         date: formatDate(dadFriday),
         time: '18:00',
-        description: 'En vecka hos pappa (fredag till fredag)',
+        description: 'Helg + vecka hos pappa (7 dagar)',
         parent: 'dad',
         type: 'other'
       })
     }
     
-    // Week 3: Mom Friday -> Monday (3 days weekend)
+    // 4. Mom Friday -> Monday (10 days) - 2 weekends + 1 week
     const momFriday = new Date(cycleStart)
-    momFriday.setDate(cycleStart.getDate() + 18)
+    momFriday.setDate(cycleStart.getDate() + 18) // 11 + 7 = 18
     if (momFriday <= endDate) {
       events.push({
         id: `cycle-${eventId++}`,
         title: 'Aston hos mamma',
         date: formatDate(momFriday),
         time: '18:00',
-        description: 'Helg hos mamma (fredag till måndag)',
+        description: 'Helg + vecka + helg hos mamma (10 dagar)',
         parent: 'mom',
         type: 'other'
       })
     }
     
-    // Move to next cycle (21 days later)
-    cycleStart.setDate(cycleStart.getDate() + 21)
+    // Move to next cycle (28 days later)
+    cycleStart.setDate(cycleStart.getDate() + 28)
   }
   
   return events
