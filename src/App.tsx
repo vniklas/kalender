@@ -163,15 +163,6 @@ function App() {
     setShowForm(false)
   }
 
-  const resetSchedule = () => {
-    if (confirm('Är du säker på att du vill återställa schemat till ursprungligt läge? Alla tillagda och redigerade händelser kommer att försvinna.')) {
-      const initialSchedule = generateInitialSchedule()
-      updateEvents(initialSchedule)
-      setEditingEvent(null)
-      setShowForm(false)
-    }
-  }
-
   const exportToCalendar = () => {
     // Generate ICS file content
     let icsContent = [
@@ -245,13 +236,6 @@ function App() {
             title="Exportera till Apple Kalender"
           >
             📅 Exportera till Kalender
-          </button>
-          <button 
-            className="btn btn-reset" 
-            onClick={resetSchedule}
-            title="Återställ till ursprungligt schema"
-          >
-            🔄 Återställ schema
           </button>
         </div>
 
