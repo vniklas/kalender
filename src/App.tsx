@@ -346,6 +346,33 @@ function App() {
   }
 
   const exportToCalendar = () => {
+    // Fråga användaren om startdatum
+    const fromDateStr = prompt('Exportera händelser från datum (ÅÅÅÅ-MM-DD):\n\nLämna tomt för att exportera alla händelser', '')
+    
+    // Om användaren trycker avbryt
+    if (fromDateStr === null) return
+    
+    let fromDate: Date | null = null
+    
+    // Om användaren angav ett datum
+    if (fromDateStr.trim() !== '') {
+      fromDate = new Date(fromDateStr)
+      if (isNaN(fromDate.getTime())) {
+        alert('Ogiltigt datumformat. Använd ÅÅÅÅ-MM-DD (t.ex. 2026-02-01)')
+        return
+      }
+    }
+    
+    // Filtrera händelser baserat på startdatum
+    const eventsToExport = fromDate 
+      ? events.filter(event => new Date(event.date) >= fromDate)
+      : events
+    
+    if (eventsToExport.length === 0) {
+      alert('Inga händelser att exportera från det datumet.')
+      return
+    }
+    
     // Generate ICS file content
     let icsContent = [
       'BEGIN:VCALENDAR',
@@ -357,7 +384,7 @@ function App() {
       'X-WR-TIMEZONE:Europe/Stockholm',
     ]
 
-    events.forEach(event => {
+    eventsToExport.forEach(event => {
       const eventDate = new Date(event.date + 'T' + event.time)
       const endDate = new Date(eventDate)
       endDate.setHours(endDate.getHours() + 1) // 1 hour duration by default
@@ -387,7 +414,12 @@ function App() {
     const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
-    link.download = 'astons-schema.ics'
+    
+    // Lägg till datum i filnamnet om filter används
+    const filename = fromDate 
+      ? `astons-schema-fran-${formatDate(fromDate)}.ics`
+      : 'astons-schema.ics'
+    link.download = filename
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
