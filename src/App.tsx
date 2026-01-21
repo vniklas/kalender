@@ -4,7 +4,7 @@ import Calendar from './components/Calendar'
 import EventForm from './components/EventForm'
 import EventList from './components/EventList'
 
-const APP_VERSION = '1.1.0'
+const APP_VERSION = '1.2.0'
 
 export interface ScheduleEvent {
   id: string
@@ -130,6 +130,67 @@ function App() {
     return generateInitialSchedule()
   }
 
+  // PIN-kod hantering
+  const loadPin = (): string | null => {
+    return localStorage.getItem('astons-schema-pin')
+  }
+
+  const savePin = (pin: string) => {
+    localStorage.setItem('astons-schema-pin', pin)
+  }
+
+  const setupPin = (): boolean => {
+    const pin = prompt('Välkommen! Skapa en 4-siffrig PIN-kod för att skydda schemat:')
+    
+    if (!pin) return false
+    
+    if (!/^\d{4}$/.test(pin)) {
+      alert('PIN-koden måste vara exakt 4 siffror (0-9)')
+      return setupPin()
+    }
+    
+    const confirm = prompt('Bekräfta PIN-koden:')
+    
+    if (pin !== confirm) {
+      alert('PIN-koderna matchar inte. Försök igen.')
+      return setupPin()
+    }
+    
+    savePin(pin)
+    alert('PIN-kod sparad! Du kommer behöva denna för att göra ändringar i schemat.')
+    return true
+  }
+
+  const verifyPin = (action: string): boolean => {
+    const savedPin = loadPin()
+    
+    if (!savedPin) {
+      // Första gången - skapa PIN
+      return setupPin()
+    }
+    
+    const enteredPin = prompt(`Ange PIN-kod för att ${action}:`)
+    
+    if (!enteredPin) return false
+    
+    if (enteredPin === savedPin) {
+      return true
+    }
+    
+    // Specialfall: återställ PIN om användaren skriver "RESET"
+    if (enteredPin === 'RESET') {
+      const confirmReset = confirm('Vill du återställa PIN-koden? Detta kräver att du skapar en ny PIN.')
+      if (confirmReset) {
+        localStorage.removeItem('astons-schema-pin')
+        return setupPin()
+      }
+      return false
+    }
+    
+    alert('Fel PIN-kod!')
+    return false
+  }
+
   const [events, setEvents] = useState<ScheduleEvent[]>(loadEvents())
   const [showForm, setShowForm] = useState(false)
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null)
@@ -141,6 +202,8 @@ function App() {
   }
 
   const addEvent = (event: Omit<ScheduleEvent, 'id'>) => {
+    if (!verifyPin('lägga till händelse')) return
+    
     const newEvent: ScheduleEvent = {
       ...event,
       id: Date.now().toString(),
@@ -150,6 +213,8 @@ function App() {
   }
 
   const updateEvent = (updatedEvent: ScheduleEvent) => {
+    if (!verifyPin('redigera händelse')) return
+    
     updateEvents(events.map(event => 
       event.id === updatedEvent.id ? updatedEvent : event
     ))
@@ -157,6 +222,8 @@ function App() {
   }
 
   const deleteEvent = (id: string) => {
+    if (!verifyPin('ta bort händelse')) return
+    
     updateEvents(events.filter(event => event.id !== id))
   }
 
@@ -166,6 +233,8 @@ function App() {
   }
 
   const cleanupFutureEvents = () => {
+    if (!verifyPin('rensa framtida händelser')) return
+    
     const cutoffDateStr = prompt('Ta bort alla händelser från och med datum (ÅÅÅÅ-MM-DD):')
     
     if (!cutoffDateStr) return // Användaren avbröt
@@ -194,6 +263,8 @@ function App() {
   }
 
   const continueSchedule = () => {
+    if (!verifyPin('fortsätta schemat')) return
+    
     if (events.length === 0) {
       alert('Kan inte fortsätta - inget befintligt schema att utgå från')
       return
@@ -495,6 +566,22 @@ function App() {
       
       <footer className="app-footer">
         <p>Version {APP_VERSION}</p>
+        <p className="pin-info">
+          🔒 Schemat är skyddat med PIN-kod. 
+          <button 
+            className="btn-link" 
+            onClick={() => {
+              if (verifyPin('ändra PIN-kod')) {
+                localStorage.removeItem('astons-schema-pin')
+                if (setupPin()) {
+                  alert('PIN-kod uppdaterad!')
+                }
+              }
+            }}
+          >
+            Ändra PIN
+          </button>
+        </p>
       </footer>
     </div>
   )
